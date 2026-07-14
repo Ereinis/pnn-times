@@ -49,7 +49,7 @@
 
 * { box-sizing: border-box; }
 
-html, body { height: 100%; margin: 0; }
+html, body { height: 100%; margin: 0; overflow-x: hidden; }
 
 /* This is the fix for the overlapping-panels bug: the browser's
    default `[hidden] { display: none }` rule and an author class of
@@ -364,10 +364,50 @@ button { font-family: inherit; cursor: pointer; }
 
   .sidebar {
     width: 100%;
-    height: 40vh;
+    height: 38vh;
     border-right: none;
     border-bottom: 1px solid var(--border);
+    padding: 18px 16px 16px;
   }
 
-  .reader { height: 60vh; }
+  .reader { height: 62vh; }
+
+  .reader__book {
+    padding: 14px 10px 16px;
+  }
+
+  .reader__toolbar {
+    margin-bottom: 8px;
+  }
+
+  .reader__issue-name {
+    font-size: 12.5px;
+    max-width: 40vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .reader__controls { gap: 6px; }
+
+  /* Bigger tap targets — 30px buttons are fine with a mouse but too
+     small to hit reliably with a thumb. */
+  .reader__btn {
+    width: 38px;
+    height: 38px;
+    font-size: 17px;
+  }
+
+  .flipbook-wrap { max-width: 100%; }
+}
+
+@media (max-width: 420px) {
+  .sidebar__logo { width: 88px; }
+  .sidebar__title { font-size: 19px; }
+
+  .placeholder__text {
+    font-size: 14px;
+    padding: 0 20px;
+    text-align: center;
+  }
 }

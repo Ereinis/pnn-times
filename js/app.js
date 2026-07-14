@@ -154,12 +154,21 @@
     const pdf = await loadingTask.promise;
     const images = [];
 
-    // A scale of ~1.6 keeps text crisp without generating huge
-    // images for long issues.
-    const scale = 1.6;
+    // The old fixed `scale = 1.6` rendered every page at the same
+    // pixel size no matter how big the flipbook ends up on screen —
+    // fine on a small desktop preview, soft/blurry once the book is
+    // stretched wider (or viewed on a retina/mobile screen with a
+    // higher device pixel ratio than 1). Instead, figure out roughly
+    // how wide a page will actually be rendered on THIS screen, and
+    // rasterize at that pixel size (capped so huge desktop monitors
+    // don't generate absurdly large images).
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const targetDisplayWidth = Math.min(window.innerWidth, 1100); // matches flipbook maxWidth
 
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
+      const baseViewport = page.getViewport({ scale: 1 });
+      const scale = Math.min(4, (targetDisplayWidth * dpr) / baseViewport.width);
       const viewport = page.getViewport({ scale });
 
       const canvas = document.createElement('canvas');
@@ -168,7 +177,7 @@
       const context = canvas.getContext('2d');
 
       await page.render({ canvasContext: context, viewport }).promise;
-      images.push(canvas.toDataURL('image/jpeg', 0.92));
+      images.push(canvas.toDataURL('image/jpeg', 0.95));
 
       if (onProgress) onProgress(pageNum, pdf.numPages);
     }
@@ -187,9 +196,9 @@
       width: 550,
       height: 733,
       size: 'stretch',
-      minWidth: 280,
+      minWidth: 240,
       maxWidth: 1100,
-      minHeight: 400,
+      minHeight: 320,
       maxHeight: 1400,
       maxShadowOpacity: 0.4,
       showCover: true,
