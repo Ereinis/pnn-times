@@ -121,7 +121,7 @@
   // ---------------------------------------------------------------
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.6.82/pdf.worker.min.js';
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
   async function openIssue(issue, card) {
     if (activeCard) activeCard.classList.remove('is-active');
