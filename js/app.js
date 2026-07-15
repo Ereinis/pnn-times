@@ -209,6 +209,8 @@
       const context = canvas.getContext('2d');
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
 
       await page.render({ canvasContext: context, viewport }).promise;
       images.push(canvas.toDataURL('image/png'));
