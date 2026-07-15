@@ -192,21 +192,26 @@
     // see getFlipbookTargetWidth), times device pixel ratio so retina
     // screens don't upscale a lower-res image. Capped at 4x scale so
     // an unusually large monitor doesn't generate huge images.
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    const dpr = Math.min(window.devicePixelRatio || 1, 4);
 
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const baseViewport = page.getViewport({ scale: 1 });
-      const scale = Math.min(4, (targetDisplayWidth * dpr) / baseViewport.width);
+      const scale = Math.max(
+          6,
+          (targetDisplayWidth * dpr * 2) / baseViewport.width
+      );
       const viewport = page.getViewport({ scale });
 
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       const context = canvas.getContext('2d');
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
 
       await page.render({ canvasContext: context, viewport }).promise;
-      images.push(canvas.toDataURL('image/jpeg', 0.95));
+      images.push(canvas.toDataURL('image/png'));
 
       if (onProgress) onProgress(pageNum, pdf.numPages);
     }
