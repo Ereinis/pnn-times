@@ -8,15 +8,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const currentIssueTitle = document.getElementById("currentIssueTitle");
 
     fetch("newspapers/index.json")
-        .then(r => r.json())
-        .then(issues => {
+        .then(response => response.json())
+        .then(data => {
 
             list.innerHTML = "";
 
-            issues.forEach(issue => {
+            data.issues.forEach(issue => {
 
                 const button = document.createElement("button");
-
                 button.className = "issue-card";
                 button.textContent = issue.title;
 
@@ -27,9 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     currentIssueTitle.textContent = issue.title;
 
-                    viewer.src =
-                        issue.url +
-                        "#toolbar=0&navpanes=0&scrollbar=0";
+                    viewer.src = issue.url + "#toolbar=0&navpanes=0";
 
                 };
 
@@ -37,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             });
 
-        });
+        })
+        .catch(error => console.error(error));
 
 });
