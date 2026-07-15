@@ -1,7 +1,0 @@
-{
-  "name": "pnn-library",
-  "private": true,
-  "scripts": {
-    "build": "node scripts/generate-manifest.js"
-  }
-}
