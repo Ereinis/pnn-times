@@ -169,6 +169,7 @@ button { font-family: inherit; cursor: pointer; }
 
 .issue-card {
   position: relative;
+   color: var(--text-color);
   text-align: left;
   background: transparent;
   border: 1px solid transparent;
