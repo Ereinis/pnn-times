@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PNN Library</title>
+
+<!-- Font: Plus Jakarta Sans — closest open substitute for Canva Sans.
+     Canva Sans itself is a proprietary Canva in-house font and isn't
+     distributed for use outside Canva's own products, so it can't be
+     linked here. See README for details. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="app">
+
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar">
+      <div class="sidebar__top">
+        <h1 class="sidebar__title">Library</h1>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light or dark mode">
+          <span class="theme-toggle__icon" id="themeIcon">🌙</span>
+          <span class="theme-toggle__label" id="themeLabel">Dark</span>
+        </button>
+      </div>
+
+      <div class="sidebar__brand">
+        <img src="assets/pnn-logo.png" alt="PNN" class="sidebar__logo">
+      </div>
+
+      <div class="sidebar__divider"></div>
+
+      <span class="sidebar__eyebrow">Issues</span>
+
+      <nav class="issue-list" id="issueList" aria-label="Newspaper issues">
+        <div class="issue-list__empty" id="issueListLoading">Loading issues…</div>
+      </nav>
+    </aside>
+
+    <!-- ============ MAIN / READER ============ -->
+    <main class="reader">
+
+      <div class="reader__placeholder" id="placeholder">
+        <img src="assets/pnn-logo.png" alt="" class="placeholder__logo">
+        <p class="placeholder__text">Select an issue from the menu to read <span class="arrow">→</span></p>
+      </div>
+
+      <div class="reader__loading" id="readerLoading" hidden>
+        <div class="loading-spinner"></div>
+        <p id="readerLoadingText">Preparing issue…</p>
+      </div>
+
+      <div class="reader__book" id="readerBook" hidden>
+        <div class="reader__toolbar">
+          <span class="reader__issue-name" id="currentIssueTitle"></span>
+          <div class="reader__controls">
+            <button id="prevPage" class="reader__btn" type="button" aria-label="Previous page">‹</button>
+            <span class="reader__page-indicator" id="pageIndicator">1 / 1</span>
+            <button id="nextPage" class="reader__btn" type="button" aria-label="Next page">›</button>
+            <button id="closeBook" class="reader__btn reader__btn--close" type="button" aria-label="Close issue">✕</button>
+          </div>
+        </div>
+        <div class="flipbook-wrap">
+          <div id="flipbook"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- pdf.js: renders each PDF page to a canvas image for the flipbook -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
