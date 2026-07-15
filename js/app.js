@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const readerBook = document.getElementById("readerBook");
     const currentIssueTitle = document.getElementById("currentIssueTitle");
 
-    fetch("newspapers/index.json")
+    fetch("newspapers/manifest.json")
         .then(response => response.json())
         .then(data => {
 
