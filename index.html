@@ -1,81 +1,95 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PNN Library</title>
+#!/usr/bin/env node
+/**
+ * generate-manifest.js
+ * ---------------------------------------------------------------
+ * Build-time replacement for the old api/issues.php.
+ *
+ * There's no PHP/MySQL anymore, so nothing scans the /newspapers
+ * folder while the site is live. Instead, this script runs once at
+ * BUILD time (Cloudflare Pages runs it automatically on every push,
+ * see the "build command" note in README.md) and writes a plain
+ * newspapers/manifest.json that the static site fetches at runtime.
+ *
+ * Net effect for you: drop a new PDF into /newspapers, push it,
+ * Cloudflare rebuilds, the manifest regenerates, the issue shows up
+ * — no manual JSON editing, no server-side code running live.
+ *
+ * Run it by hand any time with:
+ *   node scripts/generate-manifest.js
+ * ---------------------------------------------------------------
+ */
 
-<!-- Font: Plus Jakarta Sans — closest open substitute for Canva Sans.
-     Canva Sans itself is a proprietary Canva in-house font and isn't
-     distributed for use outside Canva's own products, so it can't be
-     linked here. See README for details. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+const fs = require('fs');
+const path = require('path');
 
-<link rel="stylesheet" href="css/style.css">
-</head>
-<body>
+const NEWSPAPERS_DIR = path.join(__dirname, '..', 'newspapers');
+const MANIFEST_PATH = path.join(NEWSPAPERS_DIR, 'manifest.json');
 
-  <div class="app">
+function humanizeTitle(filename) {
+  let name = filename.replace(/\.pdf$/i, '');
+  name = name.replace(/[_-]+/g, ' ');
+  name = name.replace(/\s+/g, ' ').trim();
+  name = name.replace(/\s+(\d)$/, ' $1');
+  return name || 'Untitled Issue';
+}
 
-    <!-- ============ SIDEBAR ============ -->
-    <aside class="sidebar">
-      <div class="sidebar__top">
-        <h1 class="sidebar__title">Library</h1>
-        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle light or dark mode">
-          <span class="theme-toggle__icon" id="themeIcon">🌙</span>
-          <span class="theme-toggle__label" id="themeLabel">Dark</span>
-        </button>
-      </div>
+/**
+ * Pull /CreationDate or /ModDate out of a PDF's raw bytes without any
+ * external PDF library. PDF dates look like: D:20260612101530+01'00'
+ */
+function pdfInternalDate(filePath) {
+  try {
+    const fd = fs.openSync(filePath, 'r');
+    const bufSize = 200000; // metadata usually lives in the first/last chunk
+    const buffer = Buffer.alloc(bufSize);
+    const bytesRead = fs.readSync(fd, buffer, 0, bufSize, 0);
+    fs.closeSync(fd);
 
-      <div class="sidebar__brand">
-        <img src="assets/pnn-logo.png" alt="PNN" class="sidebar__logo">
-      </div>
+    const chunk = buffer.toString('latin1', 0, bytesRead);
+    const match = chunk.match(/\/(CreationDate|ModDate)\s*\(D:(\d{4})(\d{2})(\d{2})/);
+    if (!match) return null;
 
-      <div class="sidebar__divider"></div>
+    const [, , year, month, day] = match;
+    const ts = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day))).getTime();
+    return Number.isNaN(ts) ? null : ts;
+  } catch {
+    return null;
+  }
+}
 
-      <span class="sidebar__eyebrow">Issues</span>
+function formatDate(timestampMs) {
+  const d = new Date(timestampMs);
+  return d.toLocaleDateString('en-US', { month: 'long', day: '2-digit', year: 'numeric', timeZone: 'UTC' });
+}
 
-      <nav class="issue-list" id="issueList" aria-label="Newspaper issues">
-        <div class="issue-list__empty" id="issueListLoading">Loading issues…</div>
-      </nav>
-    </aside>
+function main() {
+  if (!fs.existsSync(NEWSPAPERS_DIR)) {
+    console.error(`No newspapers folder found at ${NEWSPAPERS_DIR}`);
+    process.exit(1);
+  }
 
-    <!-- ============ MAIN / READER ============ -->
-    <main class="reader">
+  const files = fs.readdirSync(NEWSPAPERS_DIR).filter((f) => /\.pdf$/i.test(f));
 
-      <div class="reader__placeholder" id="placeholder">
-        <img src="assets/pnn-logo.png" alt="" class="placeholder__logo">
-        <p class="placeholder__text">Select an issue from the menu to read <span class="arrow">→</span></p>
-      </div>
+  const issues = files.map((filename) => {
+    const filePath = path.join(NEWSPAPERS_DIR, filename);
+    const stat = fs.statSync(filePath);
+    const internalDate = pdfInternalDate(filePath);
+    const timestamp = internalDate || stat.mtimeMs;
 
-      <div class="reader__loading" id="readerLoading" hidden>
-        <div class="loading-spinner"></div>
-        <p id="readerLoadingText">Preparing issue…</p>
-      </div>
+    return {
+      file: filename,
+      url: `newspapers/${encodeURIComponent(filename)}`,
+      title: humanizeTitle(filename),
+      date: formatDate(timestamp),
+      timestamp,
+      sizeKb: Math.round(stat.size / 1024),
+    };
+  });
 
-      <div class="reader__book" id="readerBook" hidden>
-        <div class="reader__toolbar">
-          <span class="reader__issue-name" id="currentIssueTitle"></span>
-          <div class="reader__controls">
-            <button id="prevPage" class="reader__btn" type="button" aria-label="Previous page">‹</button>
-            <span class="reader__page-indicator" id="pageIndicator">1 / 1</span>
-            <button id="nextPage" class="reader__btn" type="button" aria-label="Next page">›</button>
-            <button id="closeBook" class="reader__btn reader__btn--close" type="button" aria-label="Close issue">✕</button>
-          </div>
-        </div>
-        <div class="flipbook-wrap">
-          <div id="flipbook"></div>
-        </div>
-      </div>
+  issues.sort((a, b) => b.timestamp - a.timestamp);
 
-    </main>
-  </div>
+  fs.writeFileSync(MANIFEST_PATH, JSON.stringify({ issues }, null, 2));
+  console.log(`Wrote ${issues.length} issue(s) to ${MANIFEST_PATH}`);
+}
 
-  <!-- pdf.js: renders each PDF page to a canvas image for the flipbook -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
-  <script src="js/app.js"></script>
-</body>
-</html>
+main();
